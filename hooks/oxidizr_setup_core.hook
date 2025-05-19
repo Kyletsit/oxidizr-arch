@@ -1,0 +1,10 @@
+[Trigger]
+Type = Package
+Operation = Upgrade
+Target = coreutils
+
+[Action]
+Description = Oxidizng coreutils...
+When = PostTransaction
+Exec = /usr/bin/oxidizr-arch post-transaction-core
+NeedsTargets

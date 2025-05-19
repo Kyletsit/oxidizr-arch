@@ -1,0 +1,10 @@
+[Trigger]
+Type = Package
+Operation = Upgrade
+Target = findutils
+
+[Action]
+Description = Oxidizng findutils...
+When = PostTransaction
+Exec = /usr/bin/oxidizr-arch post-transaction-find
+NeedsTargets

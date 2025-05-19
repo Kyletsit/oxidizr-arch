@@ -1,0 +1,10 @@
+[Trigger]
+Type = Package
+Operation = Upgrade
+Target = sudo
+
+[Action]
+Description = Oxidizng sudo...
+When = PostTransaction
+Exec = /usr/bin/oxidizr-arch post-transaction-sudo
+NeedsTargets

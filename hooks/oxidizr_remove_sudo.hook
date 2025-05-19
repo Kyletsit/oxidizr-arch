@@ -1,0 +1,10 @@
+[Trigger]
+Type = Package
+Operation = Upgrade
+Target = sudo
+
+[Action]
+Description = Deoxidizng sudo...
+When = PreTransaction
+Exec = /usr/bin/oxidizr-arch pre-transaction-sudo
+NeedsTargets

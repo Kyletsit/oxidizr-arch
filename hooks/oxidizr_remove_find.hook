@@ -1,0 +1,10 @@
+[Trigger]
+Type = Package
+Operation = Upgrade
+Target = findutils
+
+[Action]
+Description = Deoxidizng findutils...
+When = PreTransaction
+Exec = /usr/bin/oxidizr-arch pre-transaction-find
+NeedsTargets
