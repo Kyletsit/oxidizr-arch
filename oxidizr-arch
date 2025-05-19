@@ -1,0 +1,287 @@
+#!/usr/bin/bash
+
+cd "$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )"
+
+C_RED='\e[38;5;9m'
+C_INVERT='\e[7m'
+C_RESET='\e[0m'
+
+FLAG_DIR=/usr/share/oxidizr-arch
+
+## COREUTILS
+
+BIN_PATH=/usr/bin
+CU_CORE_DIR=cu-core
+UU_CORE_DIR=uu-core
+SWITCHER_CORE_DIR=au-core
+CU_CORE_PREF=cu
+
+uutils-core () {
+    echo UU-CORE
+
+    [ ! -d ${BIN_PATH}/${SWITCHER_CORE_DIR} ] && echo -e "${C_RED}ERROR: Not set up${C_RESET}" >&2 && exit 1
+
+    ln -sfT ${BIN_PATH}/${UU_CORE_DIR}/ ${BIN_PATH}/${SWITCHER_CORE_DIR} || exit 1
+
+    touch ${FLAG_DIR}/core-on
+}
+
+coreutils-core () {
+    echo CU-CORE
+
+    [ ! -d ${BIN_PATH}/${SWITCHER_CORE_DIR} ] && echo -e "${C_RED}ERROR: Not set up${C_RESET}" >&2 && exit 1
+
+    ln -sfT ${BIN_PATH}/${CU_CORE_DIR}/ ${BIN_PATH}/${SWITCHER_CORE_DIR} || exit 1
+
+    rm ${FLAG_DIR}/core-on
+}
+
+setup-core () {
+    echo SETUP-CORE
+
+    pacman -Qi uutils-coreutils &> /dev/null || echo "uutils-coreutils not installed" && exit 0
+
+    mkdir ${BIN_PATH}/${CU_CORE_DIR} || exit 1
+    mkdir ${BIN_PATH}/${UU_CORE_DIR} || exit 1
+
+    # copy coreutils that have a uutils replacement -> cu-core/
+    cat ${FLAG_DIR}/lists/cu-core-files-move | xargs -L1 basename | xargs -I@ cp -p ${BIN_PATH}/@ ${BIN_PATH}/${CU_CORE_DIR}
+
+    # copy uutils that replace -> uu-core/
+    cat ${FLAG_DIR}/lists/cu-core-files-move | xargs -L1 basename | xargs -I@ ln -s ${BIN_PATH}/uu-coreutils ${BIN_PATH}/${UU_CORE_DIR}/@
+
+    # link new uutils -> uu-core/uu-coreutils
+    cat ${FLAG_DIR}/lists/uu-core-files-new-nopref | xargs -L1 basename | xargs -I@ ln -s ${BIN_PATH}/uu-coreutils ${BIN_PATH}/@
+
+    # make the switcher link (by default set to coreutils)
+    ln -s ${BIN_PATH}/${CU_CORE_DIR} ${BIN_PATH}/${SWITCHER_CORE_DIR}
+
+    # link util_x -> au-core/util_x
+    cat ${FLAG_DIR}/lists/cu-core-files-move | xargs -L1 basename | xargs -I@ ln -sf ${BIN_PATH}/${SWITCHER_CORE_DIR}/@ ${BIN_PATH}/@
+
+    # make prefix links to coreutils so that they are still usable
+    cat ${FLAG_DIR}/lists/cu-core-files-move | xargs -L1 basename | xargs -I@ ln -s ${BIN_PATH}/${CU_CORE_DIR}/@ ${BIN_PATH}/${CU_CORE_PREF}-@
+
+    touch ${FLAG_DIR}/core-setup
+
+    [ -f ${FLAG_DIR}/core-on ] && uutils-core
+}
+
+remove-core () {
+    echo REMOVE-CORE
+
+    [ ! -d ${BIN_PATH}/${SWITCHER_CORE_DIR} ] && echo -e "${C_RED}ERROR: Not set up${C_RESET}" >&2 && exit 1
+
+    # restore coreutils
+    cat ${FLAG_DIR}/lists/cu-core-files-move | xargs -L1 basename | xargs -I@ cp -p --remove-destination ${BIN_PATH}/${CU_CORE_DIR}/@ ${BIN_PATH}/
+    rm -fr ${BIN_PATH}/${CU_CORE_DIR}
+
+    # remove uutils noprefix links
+    cat ${FLAG_DIR}/lists/uu-core-files-new-nopref | xargs -L1 basename | xargs -I@ rm ${BIN_PATH}/@
+    rm -fr ${BIN_PATH}/${UU_CORE_DIR}
+
+    # remove coreutils prefix links
+    cat ${FLAG_DIR}/lists/cu-core-files-move | xargs -L1 basename | xargs -I@ rm ${BIN_PATH}/${CU_CORE_PREF}-@
+
+    # remove switcher
+    rm -d ${BIN_PATH}/${SWITCHER_CORE_DIR}
+
+    rm ${FLAG_DIR}/core-setup
+}
+
+pre-transaction-core () {
+    [ ! -f ${FLAG_DIR}/core-setup ] && exit
+    touch ${FLAG_DIR}/core-setup-UPDATE
+    remove-core
+}
+
+post-transaction-core () {
+    [ ! -f ${FLAG_DIR}/core-setup-UPDATE ] && exit
+    rm ${FLAG_DIR}/core-setup-UPDATE
+    setup-core
+}
+
+
+## FINDUTILS
+
+CU_FIND_DIR=cu-fnd
+UU_FIND_DIR=uu-fnd
+SWITCHER_FIND_DIR=au-fnd
+CU_FIND_PREF=cu
+
+uutils-find () {
+    echo UU-FIND
+
+    [ ! -d ${BIN_PATH}/${SWITCHER_FIND_DIR} ] && echo -e "${C_RED}ERROR: Not set up${C_RESET}" >&2 && exit 1
+
+    ln -sfT ${BIN_PATH}/${UU_FIND_DIR}/ ${BIN_PATH}/${SWITCHER_FIND_DIR} || exit 1
+
+    touch ${FLAG_DIR}/find-on
+}
+
+coreutils-find () {
+    echo CU-FIND
+
+    [ ! -d ${BIN_PATH}/${SWITCHER_FIND_DIR} ] && echo -e "${C_RED}ERROR: Not set up${C_RESET}" >&2 && exit 1
+
+    ln -sfT ${BIN_PATH}/${CU_FIND_DIR}/ ${BIN_PATH}/${SWITCHER_FIND_DIR} || exit 1
+
+    rm ${FLAG_DIR}/find-on
+}
+
+setup-find () {
+    echo SETUP-FIND
+
+    pacman -Qi uutils-coreutils &> /dev/null || echo "uutils-findutils not installed" && exit 0
+
+    mkdir ${BIN_PATH}/${CU_FIND_DIR} || exit 1
+    mkdir ${BIN_PATH}/${UU_FIND_DIR} || exit 1
+
+    # copy coreutils that have a uutils replacement -> cu-find/
+    cat ${FLAG_DIR}/lists/cu-find-files-move | xargs -L1 basename | xargs -I@ cp -p ${BIN_PATH}/@ ${BIN_PATH}/${CU_FIND_DIR}
+
+    # copy uutils that replace -> uu-find/
+    cat ${FLAG_DIR}/lists/cu-find-files-move | xargs -L1 basename | xargs -I@ ln -s ${BIN_PATH}/uu-@ ${BIN_PATH}/${UU_FIND_DIR}/@
+
+    # make the switcher link (by default set to coreutils)
+    ln -s ${BIN_PATH}/${CU_FIND_DIR} ${BIN_PATH}/${SWITCHER_FIND_DIR}
+
+    # link util_x -> au-core/util_x
+    cat ${FLAG_DIR}/lists/cu-find-files-move | xargs -L1 basename | xargs -I@ ln -sf ${BIN_PATH}/${SWITCHER_FIND_DIR}/@ ${BIN_PATH}/@
+
+    # make prefix links to coreutils so that they are still usable
+    cat ${FLAG_DIR}/lists/cu-find-files-move | xargs -L1 basename | xargs -I@ ln -s ${BIN_PATH}/${CU_FIND_DIR}/@ ${BIN_PATH}/${CU_FIND_PREF}-@
+
+    touch ${FLAG_DIR}/find-setup
+
+    [ -f ${FLAG_DIR}/find-on ] && uutils-find
+}
+
+remove-find () {
+    echo REMOVE-FIND
+
+    [ ! -d ${BIN_PATH}/${SWITCHER_FIND_DIR} ] && echo -e "${C_RED}ERROR: Not set up${C_RESET}" >&2 && exit 1
+
+    # restore coreutils
+    cat ${FLAG_DIR}/lists/cu-find-files-move | xargs -L1 basename | xargs -I@ cp -p --remove-destination ${BIN_PATH}/${CU_FIND_DIR}/@ ${BIN_PATH}/
+    rm -fr ${BIN_PATH}/${CU_FIND_DIR}
+
+    # remove uutils noprefix links
+    rm -fr ${BIN_PATH}/${UU_FIND_DIR}
+
+    # remove coreutils prefix links
+    cat ${FLAG_DIR}/lists/cu-find-files-move | xargs -L1 basename | xargs -I@ rm ${BIN_PATH}/${CU_FIND_PREF}-@
+
+    # remove switcher
+    rm -d ${BIN_PATH}/${SWITCHER_FIND_DIR}
+
+    rm ${FLAG_DIR}/find-setup
+}
+
+pre-transaction-find () {
+    [ ! -f ${FLAG_DIR}/find-setup ] && exit
+    touch ${FLAG_DIR}/find-setup-UPDATE
+    remove-find
+}
+
+post-transaction-find () {
+    [ ! -f ${FLAG_DIR}/find-setup-UPDATE ] && exit
+    rm ${FLAG_DIR}/find-setup-UPDATE
+    setup-find
+}
+
+
+## SUDO
+
+VN_SUDO_SUF=vn
+
+rust-sudo () {
+    echo RUST-SUDO
+
+    [ ! -f ${BIN_PATH}/su-${VN_SUDO_SUF} ] && echo -e "${C_RED}ERROR: Not set up${C_RESET}" >&2 && exit 1
+
+    ln -sfT ${BIN_PATH}/su-rs ${BIN_PATH}/su || exit 1
+    ln -sfT ${BIN_PATH}/sudo-rs ${BIN_PATH}/sudo || exit 1
+    ln -sfT ${BIN_PATH}/visudo-rs ${BIN_PATH}/visudo || exit 1
+
+    touch ${FLAG_DIR}/sudo-on
+}
+
+vanilla-sudo () {
+    echo VANILLA-SUDO
+
+    [ ! -f ${BIN_PATH}/su-${VN_SUDO_SUF} ] && echo -e "${C_RED}ERROR: Not set up${C_RESET}" >&2 && exit 1
+
+    ln -sfT ${BIN_PATH}/su-${VN_SUDO_SUF} ${BIN_PATH}/su || exit 1
+    ln -sfT ${BIN_PATH}/sudo-${VN_SUDO_SUF} ${BIN_PATH}/sudo || exit 1
+    ln -sfT ${BIN_PATH}/visudo-${VN_SUDO_SUF} ${BIN_PATH}/visudo || exit 1
+
+    rm ${FLAG_DIR}/sudo-on
+
+    exit 0
+}
+
+setup-sudo () {
+    echo SETUP-SUDO
+
+    pacman -Qi sudo-rs &> /dev/null || echo "sudo-rs not installed" && exit 0
+
+    # add suffix to vanilla su + sudo + visudo
+    cp -p ${BIN_PATH}/su ${BIN_PATH}/su-${VN_SUDO_SUF}
+    cp -p ${BIN_PATH}/sudo ${BIN_PATH}/sudo-${VN_SUDO_SUF}
+    cp -p ${BIN_PATH}/visudo ${BIN_PATH}/visudo-${VN_SUDO_SUF}
+
+    # link su + sudo + visudo to vanilla
+    ln -sf ${BIN_PATH}/su-${VN_SUDO_SUF} ${BIN_PATH}/su
+    ln -sf ${BIN_PATH}/sudo-${VN_SUDO_SUF} ${BIN_PATH}/sudo
+    ln -sf ${BIN_PATH}/visudo-${VN_SUDO_SUF} ${BIN_PATH}/visudo
+
+    touch ${FLAG_DIR}/sudo-setup
+
+    [ -f ${FLAG_DIR}/sudo-on ] && rust-sudo
+}
+
+remove-sudo () {
+    echo REMOVE-SUDO
+
+    [ ! -f ${BIN_PATH}/su-${VN_SUDO_SUF} ] && echo -e "${C_RED}ERROR: Not set up${C_RESET}" >&2 && exit 1
+
+    cp -p --remove-destination ${BIN_PATH}/su-${VN_SUDO_SUF} ${BIN_PATH}/su || exit 1
+    cp -p --remove-destination ${BIN_PATH}/sudo-${VN_SUDO_SUF} ${BIN_PATH}/sudo || exit 1
+    cp -p --remove-destination ${BIN_PATH}/visudo-${VN_SUDO_SUF} ${BIN_PATH}/visudo || exit 1
+
+    rm ${BIN_PATH}/su-${VN_SUDO_SUF} || exit 1
+    rm ${BIN_PATH}/sudo-${VN_SUDO_SUF} || exit 1
+    rm ${BIN_PATH}/visudo-${VN_SUDO_SUF} || exit 1
+
+    rm ${FLAG_DIR}/sudo-setup
+}
+
+pre-transaction-sudo () {
+    [ ! -f ${FLAG_DIR}/sudo-setup ] && exit
+    touch ${FLAG_DIR}/sudo-setup-UPDATE
+    remove-sudo
+}
+
+post-transaction-sudo () {
+    [ ! -f ${FLAG_DIR}/sudo-setup-UPDATE ] && exit
+    rm ${FLAG_DIR}/sudo-setup-UPDATE
+    setup-sudo
+}
+
+
+## LAUNCH
+
+#echo -e "${C_RED}${C_INVERT} WARNING!!! ${C_RESET}${C_RED} This is an extremely dangerous script, since it manipulates core utilities and sudo"
+#echo -e "             Don't run this without examining AND FULLY UNDERSTANDING it's contents, unless you want your OS bricked${C_RESET}"
+#echo
+
+[ -z "$1" ] && echo "No arguments" >&2 && exit 0
+if declare -f "$1" > /dev/null
+then
+    [ $(/usr/bin/id -u) -ne 0 ] && echo -e "${C_RED}ERROR: You cannot run this unless you are root${C_RESET}" >&2 && exit 1
+    "$@"
+else
+    echo "'$1' is not a known function name" >&2
+    exit 1
+fi
