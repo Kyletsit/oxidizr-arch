@@ -39,32 +39,39 @@ coreutils-core () {
 setup-core () {
     echo SETUP-CORE
 
-    pacman -Qi uutils-coreutils &> /dev/null || echo "uutils-coreutils not installed" && exit 0
+    pacman -Qi uutils-coreutils &> /dev/null || { echo "uutils-coreutils not installed"; exit 0; }
 
     mkdir ${BIN_PATH}/${CU_CORE_DIR} || exit 1
     mkdir ${BIN_PATH}/${UU_CORE_DIR} || exit 1
 
     # copy coreutils that have a uutils replacement -> cu-core/
     cat ${FLAG_DIR}/lists/cu-core-files-move | xargs -L1 basename | xargs -I@ cp -p ${BIN_PATH}/@ ${BIN_PATH}/${CU_CORE_DIR}
+    echo SETUP-CORE1
 
     # copy uutils that replace -> uu-core/
     cat ${FLAG_DIR}/lists/cu-core-files-move | xargs -L1 basename | xargs -I@ ln -s ${BIN_PATH}/uu-coreutils ${BIN_PATH}/${UU_CORE_DIR}/@
+    echo SETUP-CORE2
 
     # link new uutils -> uu-core/uu-coreutils
     cat ${FLAG_DIR}/lists/uu-core-files-new-nopref | xargs -L1 basename | xargs -I@ ln -s ${BIN_PATH}/uu-coreutils ${BIN_PATH}/@
+    echo SETUP-CORE3
 
     # make the switcher link (by default set to coreutils)
     ln -s ${BIN_PATH}/${CU_CORE_DIR} ${BIN_PATH}/${SWITCHER_CORE_DIR}
+    echo SETUP-CORE4
 
     # link util_x -> au-core/util_x
     cat ${FLAG_DIR}/lists/cu-core-files-move | xargs -L1 basename | xargs -I@ ln -sf ${BIN_PATH}/${SWITCHER_CORE_DIR}/@ ${BIN_PATH}/@
+    echo SETUP-CORE5
 
     # make prefix links to coreutils so that they are still usable
     cat ${FLAG_DIR}/lists/cu-core-files-move | xargs -L1 basename | xargs -I@ ln -s ${BIN_PATH}/${CU_CORE_DIR}/@ ${BIN_PATH}/${CU_CORE_PREF}-@
+    echo SETUP-CORE6
 
     touch ${FLAG_DIR}/core-setup
 
     [ -f ${FLAG_DIR}/core-on ] && uutils-core
+    echo SETUP-CORE7
 }
 
 remove-core () {
@@ -132,7 +139,7 @@ coreutils-find () {
 setup-find () {
     echo SETUP-FIND
 
-    pacman -Qi uutils-coreutils &> /dev/null || echo "uutils-findutils not installed" && exit 0
+    pacman -Qi uutils-coreutils &> /dev/null || { echo "uutils-findutils not installed"; exit 0; }
 
     mkdir ${BIN_PATH}/${CU_FIND_DIR} || exit 1
     mkdir ${BIN_PATH}/${UU_FIND_DIR} || exit 1
@@ -224,7 +231,7 @@ vanilla-sudo () {
 setup-sudo () {
     echo SETUP-SUDO
 
-    pacman -Qi sudo-rs &> /dev/null || echo "sudo-rs not installed" && exit 0
+    pacman -Qi sudo-rs &> /dev/null || { echo "sudo-rs not installed"; exit 0; }
 
     # add suffix to vanilla su + sudo + visudo
     cp -p ${BIN_PATH}/su ${BIN_PATH}/su-${VN_SUDO_SUF}
