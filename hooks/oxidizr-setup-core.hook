@@ -2,6 +2,8 @@
 Type = Package
 Operation = Upgrade
 Target = coreutils
+Target = util-linux
+Target = procps-ng
 
 [Action]
 Description = Oxidizng coreutils...
