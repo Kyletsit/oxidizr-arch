@@ -1,3 +1,6 @@
+# BROKEN, EXERCISE CAUTION OR YOUR CORE UTILS WILL BE GONE
+If it happens reinstall coreutils with pacman
+
 Inspired by https://github.com/jnsgruk/oxidizr
 
 ### Currently supports
