@@ -1,2 +1,2 @@
-/usr/bin/find
-/usr/bin/xargs
+find
+xargs
