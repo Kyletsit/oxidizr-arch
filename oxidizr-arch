@@ -203,14 +203,18 @@ remove-sudo () {
 
 pre-transaction-sudo () {
     [ ! -f ${FLAG_DIR}/sudo-setup ] && exit
-    touch ${FLAG_DIR}/sudo-setup-UPDATE
-    remove-sudo
 }
 
 post-transaction-sudo () {
-    [ ! -f ${FLAG_DIR}/sudo-setup-UPDATE ] && exit
-    rm ${FLAG_DIR}/sudo-setup-UPDATE
-    setup-sudo
+    [ ! -f ${FLAG_DIR}/sudo-setup ] && exit
+
+    cp -p ${BIN_PATH}/su ${BIN_PATH}/su-${VN_SUDO_SUF} || exit 1
+    cp -p ${BIN_PATH}/sudo ${BIN_PATH}/sudo-${VN_SUDO_SUF} || exit 1
+    cp -p ${BIN_PATH}/visudo ${BIN_PATH}/visudo-${VN_SUDO_SUF} || exit 1
+
+    [ ! -f ${FLAG_DIR}/sudo-on ] && exit
+
+    rust-sudo
 }
 
 
